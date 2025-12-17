@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Modelo de Usuário
+// Armazena apenas vocês dois.
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  name      String?
+  password  String   // Senha (será armazenada como hash por boa prática, mesmo sendo simples)
+  bio       String?  @db.Text
+  avatarUrl String?
+
+  reviews   Review[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Modelo de Mídia (Filmes e Séries)
+// Tabela única para evitar duplicidade.
+model Media {
+  id            String    @id @default(cuid())
+  tmdbId        Int?      @unique
+  title         String
+  originalTitle String?
+  type          MediaType
+  posterUrl     String?
+  backdropUrl   String?
+  overview      String?   @db.Text
+  releaseDate   String?   // Guardar como string ano ou data completa facilita flexibilidade
+
+  reviews       Review[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Modelo de Review
+// A "alma" do projeto.
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 0 a 5
+  comment   String?  @db.Text
+  watchedAt DateTime @default(now())
+  favorite  Boolean  @default(false)
+
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  mediaId   String
+  media     Media    @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, mediaId]) // Garante um review por pessoa por filme
+}
+
+enum MediaType {
+  MOVIE
+  SERIE
+}
