@@ -34,20 +34,16 @@ export default async function Home() {
         redirect("/login");
     }
 
-    // BLINDAGEM: Verifica se o username realmente existe
     const sessionUsername = (session.user as any).username;
 
     if (!sessionUsername) {
-        // Se o username estiver vazio (erro de cookie), força logout para limpar
         redirect("/api/auth/signout");
     }
 
-    // Agora é seguro buscar no banco
     const currentUser = await prisma.user.findUnique({
         where: { username: sessionUsername }
     });
 
-    // Se não achar o usuário no banco (deletado?), força logout
     if (!currentUser) {
         redirect("/api/auth/signout");
     }
@@ -63,17 +59,18 @@ export default async function Home() {
     return (
         <div className="min-h-screen bg-zinc-950 text-zinc-100 pb-20">
             <header className="border-b border-zinc-800/50 bg-zinc-950/50 backdrop-blur-md sticky top-0 z-40">
-                <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-                    <div className="flex items-center gap-2 font-bold text-xl tracking-tighter">
+                {/* Ajuste: px-4 no mobile, px-6 no desktop */}
+                <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-bold text-lg md:text-xl tracking-tighter">
                         <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-black">
                             <Clapperboard size={18} />
                         </div>
-                        Atitino
+                        <span className="hidden md:inline">Atitino</span>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3 md:gap-4">
                         <span className="text-sm font-medium text-white hidden sm:inline">{displayName}</span>
-                        <div className="relative w-9 h-9 rounded-full overflow-hidden border-2 border-zinc-800">
+                        <div className="relative w-8 h-8 md:w-9 md:h-9 rounded-full overflow-hidden border-2 border-zinc-800">
                             {displayAvatar ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img src={displayAvatar} alt="Avatar" className="w-full h-full object-cover" />
@@ -83,21 +80,28 @@ export default async function Home() {
                                 </div>
                             )}
                         </div>
-                        <a href="/settings" className="ml-2 p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-full transition-all"><Settings size={18} /></a>
+                        <a href="/settings" className="ml-1 p-2 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-full transition-all"><Settings size={18} /></a>
                         <a href="/api/auth/signout" className="p-2 text-zinc-500 hover:text-red-400 hover:bg-red-400/10 rounded-full transition-all"><LogOut size={18} /></a>
                     </div>
                 </div>
             </header>
 
-            <main className="max-w-6xl mx-auto px-6 py-12">
-                <section className="mb-20 text-center space-y-8">
-                    <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">Coleção Privada</h1>
-                    <div className="pt-2"><MovieSearch /></div>
+            {/* Ajuste: px-4 no mobile */}
+            <main className="max-w-6xl mx-auto px-4 md:px-6 py-8 md:py-12">
+                <section className="mb-12 md:mb-20 text-center space-y-6 md:space-y-8">
+                    {/* Ajuste: Texto menor no mobile (text-3xl) */}
+                    <h1 className="text-3xl md:text-6xl font-bold tracking-tight text-white">
+                        Coleção Privada
+                    </h1>
+                    <div className="pt-2">
+                        <MovieSearch />
+                    </div>
                 </section>
 
                 <section>
                     {movies.length > 0 ? (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        // Ajuste: gap-3 no mobile (bem mais justo) e gap-6 no desktop
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                             {movies.map((movie) => (
                                 <MovieCard key={movie.id} movie={movie} currentUsername={sessionUsername} />
                             ))}

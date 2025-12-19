@@ -35,12 +35,6 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-4">
             <div className="absolute inset-0 z-0 overflow-hidden">
-                <Image
-                    src="https://image.tmdb.org/t/p/original/mSDsSDwaP3E7dEfUPWy4J0djt4O.jpg"
-                    alt="Background"
-                    fill
-                    className="object-cover opacity-20 blur-sm scale-105"
-                />
                 <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/90 to-violet-950/30" />
             </div>
 
