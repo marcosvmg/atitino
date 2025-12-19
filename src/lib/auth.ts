@@ -6,14 +6,6 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
-    // Estratégia de sessão via JWT para não sobrecarregar o banco
-    session: {
-        strategy: "jwt",
-    },
-    // Página de login customizada (vamos criar no próximo passo)
-    pages: {
-        signIn: "/login",
-    },
     providers: [
         CredentialsProvider({
             name: "Credentials",
@@ -26,7 +18,6 @@ export const authOptions: NextAuthOptions = {
                     return null;
                 }
 
-                // Busca o usuário no banco pelo username
                 const user = await prisma.user.findUnique({
                     where: {
                         username: credentials.username,
@@ -34,53 +25,47 @@ export const authOptions: NextAuthOptions = {
                 });
 
                 if (!user) {
-                    // Usuário não encontrado
                     return null;
                 }
 
-                // Compara a senha enviada com o hash no banco
-                const isPasswordValid = await bcrypt.compare(
-                    credentials.password,
-                    user.password
-                );
+                const isValid = await bcrypt.compare(credentials.password, user.password);
 
-                if (!isPasswordValid) {
-                    // Senha incorreta
+                if (!isValid) {
                     return null;
                 }
 
-                // Retorna o objeto do usuário para ser salvo na sessão
+                // Retornamos o objeto completo do usuário para ser usado nos callbacks
                 return {
                     id: user.id,
                     name: user.name,
-                    email: user.username, // Usamos o campo email para passar o username (padrão do NextAuth)
-                    image: user.avatarUrl,
-                };
+                    username: user.username, // Importante passar isso
+                    avatarUrl: user.avatarUrl,
+                } as any;
             },
         }),
     ],
+    pages: {
+        signIn: "/login",
+    },
     callbacks: {
-        // Adiciona dados extras ao objeto de sessão (frontend)
-        async session({ session, token }) {
-            if (token && session.user) {
-                session.user.name = token.name;
-                session.user.image = token.picture;
-                // @ts-ignore
-                session.user.id = token.sub;
-                // @ts-ignore
-                session.user.username = token.email;
-            }
-            return session;
-        },
-        // Persiste dados no token JWT
-        async jwt({ token, user }) {
+        // 1. Passa os dados do Login para o Token
+        async jwt({ token, user }: any) {
             if (user) {
-                token.sub = user.id;
-                token.name = user.name;
-                token.email = user.email;
-                token.picture = user.image;
+                token.id = user.id;
+                token.username = user.username;
+                token.avatarUrl = user.avatarUrl;
             }
             return token;
         },
+        // 2. Passa os dados do Token para a Sessão (que usamos no front)
+        async session({ session, token }: any) {
+            if (session.user) {
+                session.user.id = token.id;
+                session.user.username = token.username; // Agora session.user.username existe!
+                session.user.avatarUrl = token.avatarUrl;
+            }
+            return session;
+        },
     },
+    secret: process.env.NEXTAUTH_SECRET,
 };
